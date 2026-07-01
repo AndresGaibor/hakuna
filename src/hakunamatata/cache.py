@@ -27,16 +27,16 @@ def _huella_texto(pregunta: str, opciones: list[str]) -> str:
 def _cargar_cache() -> dict[str, dict]:
     ruta = _ruta_cache()
     try:
-        with open(ruta) as f:
+        with open(ruta, encoding="utf-8") as f:
             return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
+    except (FileNotFoundError, json.JSONDecodeError, UnicodeDecodeError):
         return {}
 
 
 def _guardar_cache(cache: dict[str, dict]) -> None:
     ruta = _ruta_cache()
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
-    with open(ruta, "w") as f:
+    with open(ruta, "w", encoding="utf-8") as f:
         json.dump(cache, f, indent=2, ensure_ascii=False)
 
 

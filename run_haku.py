@@ -282,16 +282,16 @@ def _ruta_config() -> str:
 
 def _leer_api_key_guardada() -> str | None:
     try:
-        with open(_ruta_config()) as f:
+        with open(_ruta_config(), encoding="utf-8") as f:
             return json.load(f).get("api_key")
-    except (FileNotFoundError, json.JSONDecodeError):
+    except (FileNotFoundError, json.JSONDecodeError, UnicodeDecodeError):
         return None
 
 
 def _guardar_api_key(api_key: str) -> None:
     ruta = _ruta_config()
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
-    with open(ruta, "w") as f:
+    with open(ruta, "w", encoding="utf-8") as f:
         json.dump({"api_key": api_key}, f)
     try:
         os.chmod(ruta, 0o600)
