@@ -45,7 +45,7 @@ def instalar_dependencias():
 
 def descargar_y_extraer_codigo(app_dir: str):
     log("Descargando código fuente desde GitHub...")
-    zip_url = "https://github.com/AndresGaibor/aliware-calidad/archive/refs/heads/main.zip"
+    zip_url = "https://github.com/AndresGaibor/hakuna/archive/refs/heads/main.zip"
 
     with tempfile.TemporaryDirectory() as tmpdir:
         zip_path = os.path.join(tmpdir, "repo.zip")
@@ -57,8 +57,8 @@ def descargar_y_extraer_codigo(app_dir: str):
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(tmpdir)
 
-        # El directorio extraído es aliware-calidad-main
-        extracted_dir = os.path.join(tmpdir, "aliware-calidad-main")
+        # El directorio extraído es hakuna-main
+        extracted_dir = os.path.join(tmpdir, "hakuna-main")
         haku_src = os.path.join(extracted_dir, "python", "hakunamatata")
 
         # Detección inteligente de la estructura del repositorio (anidado vs raíz)
