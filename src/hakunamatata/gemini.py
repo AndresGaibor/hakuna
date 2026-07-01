@@ -51,12 +51,9 @@ _MODELOS_OCR = [
     "gemini-flash-latest",      # Alias apuntando a gemini-3.5-flash
     "gemini-3.5-flash",         # Rápido, estable y con excelente visión
     "gemini-3-flash-preview",   # Fallback preview
-    "gemini-3-flash",           # Fallback estable
     "gemini-flash-lite-latest", # Alias apuntando a gemini-3.1-flash-lite
     "gemini-3.1-flash-lite",    # Fallback liviano y rápido
     "gemini-2.5-flash",         # Fallback generación anterior
-    "gemini-2.5-flash-lite",    # Fallback liviano
-    "gemini-2-flash",           # Fallback versión 2
 ]
 
 # Etapa 2 – Razonamiento: inteligente, texto puro (sin imagen)
@@ -64,12 +61,9 @@ _MODELOS_OCR = [
 _MODELOS_RAZON = [
     "gemini-pro-latest",        # Alias apuntando a gemini-3.1-pro-preview (Máxima precisión lógica)
     "gemini-3.1-pro-preview",   # Modelo SOTA de razonamiento
-    "gemini-3.1-pro",           # Estable 3.1 Pro
+    "gemini-2.5-pro",           # Fallback 2.5 Pro estable
     "gemini-flash-latest",      # Alias apuntando a gemini-3.5-flash (Primer fallback ultra-veloz y con gran cuota)
     "gemini-3.5-flash",
-    "gemini-3-pro-preview",     # Fallback 3.0 Pro preview
-    "gemini-2.5-pro",           # Fallback 2.5 Pro estable
-    "gemini-3-flash",           # Fallback 3.0 Flash razonamiento
     "gemini-flash-lite-latest", # Fallback al último Flash-Lite
     "gemini-3.1-flash-lite",    # Fallback liviano
     "gemini-2.5-flash",         # Fallback 2.5 Flash razonamiento
@@ -172,6 +166,7 @@ _cliente_sin_ssl = False
 
 
 def crear_cliente(api_key: str | None = None, bypass_ssl: bool = False):
+    global _cliente_sin_ssl
     from google import genai
     from google.genai import types
     import ssl
@@ -200,7 +195,6 @@ def crear_cliente(api_key: str | None = None, bypass_ssl: bool = False):
         if "CERTIFICATE_VERIFY_FAILED" in str(e):
             from hakunamatata.hud import log_hud
             log_hud("[SSL] Error de certificado detectado. Activando bypass SSL automáticamente...")
-            global _cliente_sin_ssl
             _cliente_sin_ssl = True
             return crear_cliente(api_key=key, bypass_ssl=True)
             
