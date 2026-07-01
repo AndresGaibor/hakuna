@@ -126,6 +126,9 @@ def ejecutar_en_segundo_plano(app_dir: str, venv_python: str):
     env = os.environ.copy()
     env["PYTHONPATH"] = os.path.pathsep.join([src_dir, env.get("PYTHONPATH", "")])
     env["VIRTUAL_ENV"] = venv_dir
+    # Forzar UTF-8 para evitar UnicodeEncodeError con caracteres como ✓ ✗ en Windows (cp1252)
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
 
     # Quitar PYTHONHOME si está configurado para evitar conflictos de bibliotecas estándar
     env.pop("PYTHONHOME", None)
