@@ -116,6 +116,8 @@ def descargar_y_extraer_codigo(app_dir: str):
 
 
 def ejecutar_en_segundo_plano(app_dir: str, venv_python: str):
+    terminar_instancia_previa()
+
     punto_rojo_path = os.path.join(app_dir, "punto_rojo.py")
     src_dir = os.path.join(app_dir, "src")
     venv_dir = os.path.dirname(os.path.dirname(venv_python))
@@ -182,8 +184,41 @@ def ejecutar_en_segundo_plano(app_dir: str, venv_python: str):
         log("Plataforma no soportada para segundo plano.")
 
 
+def terminar_instancia_previa():
+    """Mata cualquier instancia anterior de punto_rojo.py que siga corriendo."""
+    if sys.platform.startswith("win"):
+        # En Windows usamos WMIC para encontrar pythonw.exe con 'punto_rojo' en la línea de comandos
+        try:
+            result = subprocess.run(
+                ["wmic", "process", "where",
+                 "(name='pythonw.exe' or name='python.exe')",
+                 "get", "processid,commandline", "/format:csv"],
+                capture_output=True, text=True, timeout=5
+            )
+            for line in result.stdout.splitlines():
+                if "punto_rojo" in line.lower():
+                    # El PID es el último campo en formato CSV
+                    partes = line.strip().split(",")
+                    pid = partes[-1].strip()
+                    if pid.isdigit():
+                        subprocess.run(["taskkill", "/F", "/PID", pid],
+                                       capture_output=True)
+                        log(f"Instancia previa terminada (PID {pid}).")
+        except Exception as e:
+            log(f"Aviso: no se pudo verificar instancias previas: {e}")
+    else:
+        # En macOS/Linux usamos pkill
+        try:
+            subprocess.run(["pkill", "-f", "punto_rojo.py"], capture_output=True)
+            log("Instancia previa terminada (pkill).")
+        except Exception:
+            pass
+
+
 def ejecutar_en_primer_plano(app_dir: str, venv_python: str):
-    """Modo debug: lanza punto_rojo.py en el mismo terminal con logs visibles."""
+    """Modo debug: mata instancia previa y lanza punto_rojo.py en el mismo terminal con logs visibles."""
+    terminar_instancia_previa()
+
     punto_rojo_path = os.path.join(app_dir, "punto_rojo.py")
     src_dir = os.path.join(app_dir, "src")
     venv_dir = os.path.dirname(os.path.dirname(venv_python))
@@ -202,7 +237,7 @@ def ejecutar_en_primer_plano(app_dir: str, venv_python: str):
     log("Presiona Ctrl+C para detener.")
     print(flush=True)
 
-    # Reemplazar el proceso actual (o usar subprocess en Windows donde execv no existe igual)
+    # En Windows subprocess.run bloquea el terminal (primer plano real)
     if sys.platform.startswith("win"):
         proc = subprocess.run(
             [venv_python, "-u", punto_rojo_path],
