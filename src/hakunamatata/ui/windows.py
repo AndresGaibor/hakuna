@@ -67,7 +67,7 @@ def ejecutar(cliente=None) -> None:
             )
 
     def tick():
-        nonlocal pendiente_gemini, _necesita_captura, visible
+        nonlocal pendiente_gemini, _necesita_captura, visible, ultima_respuesta
 
         _, mouse_y = obtener_posicion_mouse()
         from hakunamatata.overlay import debe_mostrarse_circulo
