@@ -28,6 +28,7 @@ def ejecutar(cliente=None) -> None:
     root.configure(bg=color_transparente)
     root.geometry(f"{ancho}x{alto}+0+0")
     root.wm_attributes("-transparentcolor", color_transparente)
+    root.attributes("-alpha", 0.16)  # Hace que las letras sean verdaderamente translúcidas al 16%
 
     canvas = tk.Canvas(root, bg=color_transparente, highlightthickness=0, borderwidth=0)
     canvas.pack(fill="both", expand=True)
@@ -41,14 +42,14 @@ def ejecutar(cliente=None) -> None:
             canvas.delete(text_id)
             text_id = None
         if texto:
-            # Dibujar la letra de la opción en negro extremadamente semitranslúcido en la esquina inferior izquierda
-            # Margen de 35px de los bordes. Usamos un gris muy claro (#C8C8C8) para emular negro al 16% de opacidad.
+            # Dibujar la letra de la opción en negro, la opacidad global de la ventana la hará translúcida al 16%
+            # Margen de 35px de los bordes
             text_id = canvas.create_text(
                 35,
                 alto - 35,
                 text=texto,
                 font=("Arial", 10, "bold"),
-                fill="#C8C8C8",
+                fill="#000000",
                 anchor="sw",
             )
 
