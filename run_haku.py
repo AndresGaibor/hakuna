@@ -4,6 +4,7 @@ import os
 import sys
 import subprocess
 import urllib.request
+import venv
 import zipfile
 import shutil
 import tempfile
