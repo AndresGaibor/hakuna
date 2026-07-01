@@ -79,15 +79,19 @@ def ejecutar(cliente=None) -> None:
             visible = is_top
             log_hud(f"Mouse {'en TOP ✓' if visible else 'fuera de TOP ✗'} (y={int(mouse_y)})")
             if visible:
-                # Entrando a TOP: mostrar última respuesta conocida de inmediato,
-                # y solo lanzar nueva captura si no hay una pendiente
-                if ultima_respuesta:
-                    log_hud(f"[gemini] Mostrando última respuesta cacheada: {ultima_respuesta}")
-                    actualizar_interfaz(ultima_respuesta)
-                else:
-                    actualizar_interfaz("")
+                # Entrando a TOP:
+                # Si no hay escaneo pendiente en background, limpiamos la respuesta anterior
+                # y mostramos el indicador de escaneo '..' para no confundir al usuario.
                 if not pendiente_gemini:
+                    ultima_respuesta = ""
+                    actualizar_interfaz("..")
                     _necesita_captura = True
+                else:
+                    # Si ya hay una petición corriendo en segundo plano, mostramos su estado actual
+                    if ultima_respuesta:
+                        actualizar_interfaz(ultima_respuesta)
+                    else:
+                        actualizar_interfaz("..")
             else:
                 # Saliendo de TOP: limpiar pantalla de inmediato
                 actualizar_interfaz("")
