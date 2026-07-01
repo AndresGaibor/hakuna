@@ -163,28 +163,39 @@ def ejecutar_en_segundo_plano(app_dir: str, venv_python: str):
 
     elif sys.platform.startswith("win"):
         log_path = os.path.join(os.path.dirname(app_dir), "bg_run.log")
-        log(f"Lanzando en segundo plano para Windows... (log → {log_path})")
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
 
-        # Usar python.exe (no pythonw.exe) para garantizar compatibilidad con tkinter
-        # pythonw.exe puede causar problemas con ventanas GUI en modo DETACHED_PROCESS
-        venv_python_exe = os.path.join(venv_dir, "Scripts", "python.exe")
-        if not os.path.exists(venv_python_exe):
-            venv_python_exe = venv_python
+        # Buscar el ejecutable de Python del venv: python.exe → pythonw.exe → fallback
+        scripts_dir = os.path.join(venv_dir, "Scripts")
+        for candidato in ["python.exe", "pythonw.exe"]:
+            ruta_candidato = os.path.join(scripts_dir, candidato)
+            if os.path.exists(ruta_candidato):
+                venv_python_exe = ruta_candidato
+                break
+        else:
+            venv_python_exe = venv_python  # fallback al python que ya sabemos que existe
 
-        log_file = open(log_path, "a", buffering=1)  # buffering=1 → line-buffered
+        log(f"Ejecutable: {venv_python_exe}")
+        log(f"Script    : {punto_rojo_path}")
+        log(f"Log       : {log_path}")
 
-        DETACHED_PROCESS = 0x00000008
-        subprocess.Popen(
-            [venv_python_exe, "-u", punto_rojo_path],
-            cwd=app_dir,
-            env=env,
-            creationflags=DETACHED_PROCESS,
-            close_fds=True,
-            stdout=log_file,
-            stderr=log_file,
-            stdin=subprocess.DEVNULL,
-        )
-        log(f"Iniciado en segundo plano. Logs en: {log_path}")
+        try:
+            log_file = open(log_path, "a", encoding="utf-8")
+            DETACHED_PROCESS = 0x00000008
+            proc = subprocess.Popen(
+                [venv_python_exe, "-u", punto_rojo_path],
+                cwd=app_dir,
+                env=env,
+                creationflags=DETACHED_PROCESS,
+                stdout=log_file,
+                stderr=log_file,
+                stdin=subprocess.DEVNULL,
+            )
+            log(f"Iniciado en segundo plano (PID {proc.pid}). Log → {log_path}")
+        except Exception as e:
+            log(f"ERROR al lanzar proceso de fondo: {e}")
+            raise
+
     else:
         log("Plataforma no soportada para segundo plano.")
 
