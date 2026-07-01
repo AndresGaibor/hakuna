@@ -62,13 +62,13 @@ _MODELOS_OCR = [
 # Etapa 2 – Razonamiento: inteligente, texto puro (sin imagen)
 # Orden de prioridad: el más capaz que esté disponible
 _MODELOS_RAZON = [
+    "gemini-flash-latest",      # Alias apuntando a gemini-3.5-flash (rápido y con enorme cuota)
+    "gemini-3.5-flash",
     "gemini-pro-latest",        # Alias apuntando a gemini-3.1-pro-preview
-    "gemini-3.1-pro-preview",   # Máximo razonamiento
+    "gemini-3.1-pro-preview",   # Máximo razonamiento (fallback inteligente)
     "gemini-3.1-pro",           # Estable 3.1 Pro
     "gemini-3-pro-preview",     # Fallback 3.0 Pro preview
     "gemini-2.5-pro",           # Fallback 2.5 Pro estable
-    "gemini-flash-latest",      # Fallback al último Flash
-    "gemini-3.5-flash",         # Fallback 3.5 Flash razonamiento
     "gemini-3-flash",           # Fallback 3.0 Flash razonamiento
     "gemini-flash-lite-latest", # Fallback al último Flash-Lite
     "gemini-3.1-flash-lite",    # Fallback liviano
