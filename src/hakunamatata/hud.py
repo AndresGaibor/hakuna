@@ -100,8 +100,12 @@ class _HUD:
     def log(self, msg: str):
         t = time.strftime("%H:%M:%S")
         linea = f"[{t}] {msg}\n"
+        # En Windows, sanitizar caracteres que cp1252 no puede codificar (✓ ✗ ✅ → etc.)
+        if sys.platform.startswith("win"):
+            linea = linea.encode("cp1252", errors="replace").decode("cp1252")
         # Always output to terminal immediately
         print(linea, end="", flush=True)
+
         
         # If running on macOS with HUD view, delegate the UI update to the main thread
         if self.texto and _helper:

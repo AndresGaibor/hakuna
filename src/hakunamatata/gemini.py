@@ -134,15 +134,15 @@ def _persistir_api_key(api_key: str) -> None:
 
 def _solicitar_api_key() -> str:
     print("==========================================")
-    print("  HAKUNATATA - Configuración inicial")
+    print("  HAKUNAMATATA - Configuracion inicial")
     print("==========================================")
     print()
     print("Necesitas una API key de Google Gemini.")
-    print("Obtén una en: https://aistudio.google.com/apikey")
+    print("Obten una en: https://aistudio.google.com/apikey")
     print()
     key = input("Ingresa tu API key de Gemini: ").strip()
     if not key:
-        raise ValueError("API key vacía")
+        raise ValueError("API key vacia")
     _persistir_api_key(key)
     print("API key guardada en ~/.config/hakunamatata/config.json")
     return key
