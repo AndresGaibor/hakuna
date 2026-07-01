@@ -53,7 +53,7 @@ def ejecutar(cliente=None) -> None:
             shadow_id = canvas.create_text(
                 x + 1, y + 1,
                 text=texto,
-                font=("Arial", 22, "bold"),
+                font=("Arial", 10, "bold"),
                 fill="#000000",
                 anchor="sw",
             )
@@ -61,7 +61,7 @@ def ejecutar(cliente=None) -> None:
             text_id = canvas.create_text(
                 x, y,
                 text=texto,
-                font=("Arial", 22, "bold"),
+                font=("Arial", 10, "bold"),
                 fill="#C0C0C0",
                 anchor="sw",
             )
