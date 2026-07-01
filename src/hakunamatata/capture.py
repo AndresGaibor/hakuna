@@ -197,7 +197,7 @@ def capturar_windows_bmp(ruta_bmp: str) -> None:
     hdc_screen = user32.GetDC(0)
     hdc_mem = gdi32.CreateCompatibleDC(hdc_screen)
     hbmp = gdi32.CreateCompatibleBitmap(hdc_screen, ancho, alto)
-    gdi32.SelectObject(hdc_mem, hbmp)
+    old_hbmp = gdi32.SelectObject(hdc_mem, hbmp)
     gdi32.BitBlt(hdc_mem, 0, 0, ancho, alto, hdc_screen, 0, 0, 0x00CC0020)
 
     class BITMAPFILEHEADER(ctypes.Structure):
@@ -246,6 +246,7 @@ def capturar_windows_bmp(ruta_bmp: str) -> None:
         f.write(bytes(bi))
         f.write(bytes(buffer))
 
+    gdi32.SelectObject(hdc_mem, old_hbmp)
     gdi32.DeleteObject(hbmp)
     gdi32.DeleteDC(hdc_mem)
     user32.ReleaseDC(0, hdc_screen)
@@ -389,29 +390,14 @@ def _capturar_macos_a_png(window_number: int, max_dim: int = 1440) -> bytes:
 
 def _capturar_windows_a_png(max_dim: int = 1440) -> bytes:
     import io
-    from PIL import Image
-    import ctypes
-    from ctypes import wintypes
+    from PIL import ImageGrab, Image
 
-    windll = getattr(ctypes, "windll")
-    user32 = windll.user32
-    gdi32 = windll.gdi32
+    # Usar ImageGrab de Pillow (robusto, sin fugas de recursos GDI y con soporte DPI integrado)
+    img = ImageGrab.grab()
+    ancho, alto = img.size
 
-    ancho = user32.GetSystemMetrics(0)
-    alto = user32.GetSystemMetrics(1)
-    hdc_screen = user32.GetDC(0)
-    hdc_mem = gdi32.CreateCompatibleDC(hdc_screen)
-    hbmp = gdi32.CreateCompatibleBitmap(hdc_screen, ancho, alto)
-    gdi32.SelectObject(hdc_mem, hbmp)
-    gdi32.BitBlt(hdc_mem, 0, 0, ancho, alto, hdc_screen, 0, 0, 0x00CC0020)
-
-    buffer_size = ancho * alto * 4
-    buffer = (ctypes.c_ubyte * buffer_size)()
-    gdi32.GetBitmapBits(hbmp, buffer_size, buffer)
-
-    # Windows GDI entrega en formato BGRA (BGR + Alpha).
-    # Usamos el decoder "BGRA" para mapear los canales correctamente en Pillow.
-    img = Image.frombytes("RGBA", (ancho, alto), bytes(buffer), "raw", "BGRA")
+    # Convertir a RGBA
+    img = img.convert("RGBA")
 
     # Recortar 40 píxeles arriba (barra de título) y 40 píxeles abajo (barra de tareas)
     # para estabilizar la huella de la imagen en caché.
@@ -427,10 +413,6 @@ def _capturar_windows_a_png(max_dim: int = 1440) -> bytes:
     png_buf = io.BytesIO()
     img.save(png_buf, format="PNG")
     _guardar_bytes_debug("haku_capture_sent.png", png_buf.getvalue())
-
-    gdi32.DeleteObject(hbmp)
-    gdi32.DeleteDC(hdc_mem)
-    user32.ReleaseDC(0, hdc_screen)
     return png_buf.getvalue()
 
 
