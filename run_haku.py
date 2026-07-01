@@ -187,23 +187,25 @@ def ejecutar_en_segundo_plano(app_dir: str, venv_python: str):
 def terminar_instancia_previa():
     """Mata cualquier instancia anterior de punto_rojo.py que siga corriendo."""
     if sys.platform.startswith("win"):
-        # En Windows usamos WMIC para encontrar pythonw.exe con 'punto_rojo' en la línea de comandos
+        # Filtrar directamente en WMIC por commandline para evitar falsos positivos
         try:
             result = subprocess.run(
-                ["wmic", "process", "where",
-                 "(name='pythonw.exe' or name='python.exe')",
-                 "get", "processid,commandline", "/format:csv"],
+                ["wmic", "process",
+                 "where", "commandline like '%punto_rojo%'",
+                 "get", "processid", "/format:csv"],
                 capture_output=True, text=True, timeout=5
             )
             for line in result.stdout.splitlines():
-                if "punto_rojo" in line.lower():
-                    # El PID es el último campo en formato CSV
-                    partes = line.strip().split(",")
-                    pid = partes[-1].strip()
-                    if pid.isdigit():
-                        subprocess.run(["taskkill", "/F", "/PID", pid],
-                                       capture_output=True)
-                        log(f"Instancia previa terminada (PID {pid}).")
+                line = line.strip()
+                if not line or line.lower().startswith("node"):
+                    continue
+                # Formato CSV: Node,ProcessId
+                partes = line.split(",")
+                pid = partes[-1].strip()
+                if pid.isdigit() and int(pid) != os.getpid():
+                    subprocess.run(["taskkill", "/F", "/PID", pid],
+                                   capture_output=True)
+                    log(f"Instancia previa terminada (PID {pid}).")
         except Exception as e:
             log(f"Aviso: no se pudo verificar instancias previas: {e}")
     else:
@@ -319,7 +321,8 @@ def solicitar_api_key() -> None:
 
 
 def main():
-    debug = "--debug" in sys.argv or os.environ.get("HAKU_DEBUG", "") == "1"
+    # strip() necesario: en cmd 'set X=1 &&' incluye el espacio como parte del valor
+    debug = "--debug" in sys.argv or bool(os.environ.get("HAKU_DEBUG", "").strip())
 
     app_dir = obtener_ruta_app()
     venv_dir = obtener_ruta_venv()
