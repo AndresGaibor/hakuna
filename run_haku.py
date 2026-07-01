@@ -58,8 +58,10 @@ def instalar_dependencias(venv_dir: str) -> str:
             lib_import = "PIL"
         elif lib == "google-genai":
             lib_import = "google.genai"
-        elif lib.startswith("pyobjc"):
+        elif lib == "pyobjc-core":
             lib_import = "objc"
+        elif lib == "pyobjc-framework-Cocoa":
+            lib_import = "Cocoa"
         else:
             lib_import = lib
 
