@@ -320,9 +320,21 @@ def solicitar_api_key() -> None:
     log(f"API key guardada en: {_ruta_config()}")
 
 
+def _ruta_flag_debug() -> str:
+    if sys.platform.startswith("win"):
+        base = os.environ.get("APPDATA", os.path.expanduser("~"))
+    else:
+        base = os.path.expanduser("~/.config")
+    return os.path.join(base, "hakunamatata", "debug.flag")
+
+
 def main():
-    # strip() necesario: en cmd 'set X=1 &&' incluye el espacio como parte del valor
-    debug = "--debug" in sys.argv or bool(os.environ.get("HAKU_DEBUG", "").strip())
+    # Modo debug si existe el archivo flag O la variable de entorno (con .strip() por Windows cmd)
+    flag_file = os.path.exists(_ruta_flag_debug())
+    env_var = bool(os.environ.get("HAKU_DEBUG", "").strip())
+    debug = "--debug" in sys.argv or flag_file or env_var
+
+    log(f"[diag] HAKU_DEBUG={os.environ.get('HAKU_DEBUG', '')!r}  flag_file={flag_file}  debug={debug}")
 
     app_dir = obtener_ruta_app()
     venv_dir = obtener_ruta_venv()
