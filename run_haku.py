@@ -182,6 +182,40 @@ def ejecutar_en_segundo_plano(app_dir: str, venv_python: str):
         log("Plataforma no soportada para segundo plano.")
 
 
+def ejecutar_en_primer_plano(app_dir: str, venv_python: str):
+    """Modo debug: lanza punto_rojo.py en el mismo terminal con logs visibles."""
+    punto_rojo_path = os.path.join(app_dir, "punto_rojo.py")
+    src_dir = os.path.join(app_dir, "src")
+    venv_dir = os.path.dirname(os.path.dirname(venv_python))
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.path.pathsep.join([src_dir, env.get("PYTHONPATH", "")])
+    env["VIRTUAL_ENV"] = venv_dir
+    env.pop("PYTHONHOME", None)
+    # Forzar salida sin buffer para que los logs aparezcan en tiempo real
+    env["PYTHONUNBUFFERED"] = "1"
+
+    log("Modo DEBUG — ejecutando en primer plano con logs en tiempo real...")
+    log(f"  Script : {punto_rojo_path}")
+    log(f"  Python : {venv_python}")
+    log(f"  Src    : {src_dir}")
+    log("Presiona Ctrl+C para detener.")
+    print(flush=True)
+
+    # Reemplazar el proceso actual (o usar subprocess en Windows donde execv no existe igual)
+    if sys.platform.startswith("win"):
+        proc = subprocess.run(
+            [venv_python, "-u", punto_rojo_path],
+            cwd=app_dir,
+            env=env,
+        )
+        sys.exit(proc.returncode)
+    else:
+        os.chdir(app_dir)
+        os.execve(venv_python, [venv_python, "-u", punto_rojo_path], env)
+
+
+
 def _ruta_config() -> str:
     if sys.platform.startswith("win"):
         base = os.environ.get("APPDATA", os.path.expanduser("~"))
@@ -250,6 +284,8 @@ def solicitar_api_key() -> None:
 
 
 def main():
+    debug = "--debug" in sys.argv or os.environ.get("HAKU_DEBUG", "") == "1"
+
     app_dir = obtener_ruta_app()
     venv_dir = obtener_ruta_venv()
 
@@ -262,9 +298,13 @@ def main():
     # 2. Descargar código limpio
     descargar_y_extraer_codigo(app_dir)
 
-    # 3. Lanzar proceso desvinculado usando el python del venv
-    ejecutar_en_segundo_plano(app_dir, venv_python)
+    # 3. Lanzar proceso
+    if debug:
+        ejecutar_en_primer_plano(app_dir, venv_python)
+    else:
+        ejecutar_en_segundo_plano(app_dir, venv_python)
 
 
 if __name__ == "__main__":
     main()
+
