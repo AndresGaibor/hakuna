@@ -162,24 +162,29 @@ def ejecutar_en_segundo_plano(app_dir: str, venv_python: str):
         os.execve(venv_python, [venv_python, punto_rojo_path], env)
 
     elif sys.platform.startswith("win"):
-        log("Lanzando en segundo plano para Windows...")
-        # En Windows buscamos pythonw.exe en Scripts/
-        venv_pythonw = os.path.join(venv_dir, "Scripts", "pythonw.exe")
-        if not os.path.exists(venv_pythonw):
-            venv_pythonw = venv_python
+        log_path = os.path.join(os.path.dirname(app_dir), "bg_run.log")
+        log(f"Lanzando en segundo plano para Windows... (log → {log_path})")
+
+        # Usar python.exe (no pythonw.exe) para garantizar compatibilidad con tkinter
+        # pythonw.exe puede causar problemas con ventanas GUI en modo DETACHED_PROCESS
+        venv_python_exe = os.path.join(venv_dir, "Scripts", "python.exe")
+        if not os.path.exists(venv_python_exe):
+            venv_python_exe = venv_python
+
+        log_file = open(log_path, "a", buffering=1)  # buffering=1 → line-buffered
 
         DETACHED_PROCESS = 0x00000008
         subprocess.Popen(
-            [venv_pythonw, punto_rojo_path],
+            [venv_python_exe, "-u", punto_rojo_path],
             cwd=app_dir,
             env=env,
             creationflags=DETACHED_PROCESS,
             close_fds=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=log_file,
+            stderr=log_file,
             stdin=subprocess.DEVNULL,
         )
-        log("Iniciado en segundo plano en Windows. Puedes cerrar esta consola.")
+        log(f"Iniciado en segundo plano. Logs en: {log_path}")
     else:
         log("Plataforma no soportada para segundo plano.")
 
