@@ -21,26 +21,57 @@ def obtener_ruta_app() -> str:
     return os.path.join(base, "hakunamatata", "app")
 
 
-def instalar_dependencias():
-    log("Verificando dependencias necesarias...")
+def obtener_ruta_venv() -> str:
+    if sys.platform.startswith("win"):
+        base = os.environ.get("APPDATA", os.path.expanduser("~"))
+    else:
+        base = os.path.expanduser("~/.config")
+    return os.path.join(base, "hakunamatata", "venv")
+
+
+def instalar_dependencias(venv_dir: str) -> str:
+    log("Verificando entorno virtual (venv)...")
+    if not os.path.exists(venv_dir):
+        log("Creando entorno virtual para aislar dependencias (PEP 668)...")
+        import venv
+        # Creamos el venv con pip incluido
+        venv.create(venv_dir, with_pip=True)
+        log("Entorno virtual creado con éxito.")
+
+    # Obtener el binario de python del venv
+    if sys.platform.startswith("win"):
+        venv_python = os.path.join(venv_dir, "Scripts", "python.exe")
+    else:
+        venv_python = os.path.join(venv_dir, "bin", "python")
+
+    # Asegurar que venv_python existe
+    if not os.path.exists(venv_python):
+        raise FileNotFoundError(f"No se encontró el ejecutable de Python en el venv: {venv_python}")
+
     libs = ["google-genai", "Pillow"]
     if sys.platform == "darwin":
         libs.extend(["pyobjc-core", "pyobjc-framework-Cocoa"])
 
     for lib in libs:
-        try:
-            if lib == "Pillow":
-                import PIL
-            elif lib == "google-genai":
-                import google.genai
-            elif lib.startswith("pyobjc"):
-                import objc
-            else:
-                __import__(lib)
-        except ImportError:
-            log(f"Instalando {lib}...")
-            # Usar sys.executable para correr pip del entorno actual
-            subprocess.run([sys.executable, "-m", "pip", "install", lib], check=True)
+        # Mapear importación de biblioteca para probar si está instalada en el venv
+        if lib == "Pillow":
+            lib_import = "PIL"
+        elif lib == "google-genai":
+            lib_import = "google.genai"
+        elif lib.startswith("pyobjc"):
+            lib_import = "objc"
+        else:
+            lib_import = lib
+
+        # Comprobar si la biblioteca se puede importar en el venv
+        test_cmd = [venv_python, "-c", f"import {lib_import}"]
+        res = subprocess.run(test_cmd, capture_output=True)
+        if res.returncode != 0:
+            log(f"Instalando {lib} dentro del entorno virtual...")
+            # Correr pip dentro del venv de forma segura sin contaminar el sistema
+            subprocess.run([venv_python, "-m", "pip", "install", lib], check=True)
+
+    return venv_python
 
 
 def descargar_y_extraer_codigo(app_dir: str):
@@ -75,13 +106,18 @@ def descargar_y_extraer_codigo(app_dir: str):
         log("Código instalado en el directorio local de la app.")
 
 
-def ejecutar_en_segundo_plano(app_dir: str):
+def ejecutar_en_segundo_plano(app_dir: str, venv_python: str):
     punto_rojo_path = os.path.join(app_dir, "punto_rojo.py")
     src_dir = os.path.join(app_dir, "src")
+    venv_dir = os.path.dirname(os.path.dirname(venv_python))
 
-    # Preparar el PYTHONPATH para incluir 'src'
+    # Preparar el PYTHONPATH y el entorno virtual activado
     env = os.environ.copy()
     env["PYTHONPATH"] = os.path.pathsep.join([src_dir, env.get("PYTHONPATH", "")])
+    env["VIRTUAL_ENV"] = venv_dir
+
+    # Quitar PYTHONHOME si está configurado para evitar conflictos de bibliotecas estándar
+    env.pop("PYTHONHOME", None)
 
     if sys.platform == "darwin":
         log("Lanzando en segundo plano para macOS...")
@@ -110,29 +146,20 @@ def ejecutar_en_segundo_plano(app_dir: str):
         os.dup2(log_file.fileno(), sys.stdout.fileno())
         os.dup2(log_file.fileno(), sys.stderr.fileno())
 
-        # Cambiar directorio de trabajo y ejecutar
+        # Cambiar directorio de trabajo y reemplazar el proceso usando execve de Unix
         os.chdir(app_dir)
-        sys.path.insert(0, src_dir)
-
-        from hakunamatata.gemini import crear_cliente
-        from hakunamatata.ui import main
-
-        try:
-            cliente = crear_cliente()
-        except Exception:
-            cliente = None
-
-        main(cliente)
+        os.execve(venv_python, [venv_python, punto_rojo_path], env)
 
     elif sys.platform.startswith("win"):
         log("Lanzando en segundo plano para Windows...")
-        pythonw = sys.executable.lower().replace("python.exe", "pythonw.exe")
-        if not os.path.exists(pythonw):
-            pythonw = sys.executable
+        # En Windows buscamos pythonw.exe en Scripts/
+        venv_pythonw = os.path.join(venv_dir, "Scripts", "pythonw.exe")
+        if not os.path.exists(venv_pythonw):
+            venv_pythonw = venv_python
 
         DETACHED_PROCESS = 0x00000008
         subprocess.Popen(
-            [pythonw, punto_rojo_path],
+            [venv_pythonw, punto_rojo_path],
             cwd=app_dir,
             env=env,
             creationflags=DETACHED_PROCESS,
@@ -148,9 +175,16 @@ def ejecutar_en_segundo_plano(app_dir: str):
 
 def main():
     app_dir = obtener_ruta_app()
-    instalar_dependencias()
+    venv_dir = obtener_ruta_venv()
+
+    # 1. Instalar dependencias en el venv aislado
+    venv_python = instalar_dependencias(venv_dir)
+
+    # 2. Descargar código limpio
     descargar_y_extraer_codigo(app_dir)
-    ejecutar_en_segundo_plano(app_dir)
+
+    # 3. Lanzar proceso desvinculado usando el python del venv
+    ejecutar_en_segundo_plano(app_dir, venv_python)
 
 
 if __name__ == "__main__":
