@@ -20,6 +20,7 @@ def ejecutar(cliente=None) -> None:
     pendiente_gemini = False
     _necesita_captura = False
     visible = False
+    ultima_respuesta: str = ""   # Guarda la última letra calculada
 
     color_transparente = "magenta"
     root.overrideredirect(True)
@@ -66,9 +67,15 @@ def ejecutar(cliente=None) -> None:
             visible = is_top
             log_hud(f"Mouse {'en TOP ✓' if visible else 'fuera de TOP ✗'} (y={int(mouse_y)})")
             if visible:
-                # Entrando a TOP: limpiar pantalla
-                actualizar_interfaz("")
-                _necesita_captura = True
+                # Entrando a TOP: mostrar última respuesta conocida de inmediato,
+                # y solo lanzar nueva captura si no hay una pendiente
+                if ultima_respuesta:
+                    log_hud(f"[gemini] Mostrando última respuesta cacheada: {ultima_respuesta}")
+                    actualizar_interfaz(ultima_respuesta)
+                else:
+                    actualizar_interfaz("")
+                if not pendiente_gemini:
+                    _necesita_captura = True
             else:
                 # Saliendo de TOP: limpiar pantalla de inmediato
                 actualizar_interfaz("")
@@ -127,7 +134,7 @@ def ejecutar(cliente=None) -> None:
             pendiente_gemini = False
 
     def _analizar_en_gemini(png_bytes: bytes):
-        nonlocal pendiente_gemini
+        nonlocal pendiente_gemini, ultima_respuesta
         try:
             from hakunamatata.gemini import analizar_captura
 
@@ -148,18 +155,20 @@ def ejecutar(cliente=None) -> None:
                         letras.append(chr(ord('A') + idx))
                 
                 letra = ", ".join(letras)
+                ultima_respuesta = letra  # Guardar siempre, independientemente del mouse
 
                 log_hud(
                     f"[gemini] ✅ Respuesta en {dt:.1f}s → "
                     f"opción {respuesta.indice_correcto} ({letra})"
                 )
 
-                # Solo actualizamos la interfaz si el mouse sigue en TOP
+                # Mostrar si el mouse está en TOP; si no, se mostrará la próxima vez que entre
                 if visible:
                     root.after(0, lambda: actualizar_interfaz(letra))
                 else:
                     log_hud(
-                        "[gemini] Respuesta lista pero el mouse ya salió de TOP → omitiendo dibujo"
+                        f"[gemini] Mouse fuera de TOP — respuesta '{letra}' guardada, "
+                        f"se mostrará al volver a TOP"
                     )
             else:
                 log_hud(f"[gemini] ⚠️ Sin respuesta tras {dt:.1f}s")
