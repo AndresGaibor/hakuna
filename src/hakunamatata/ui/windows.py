@@ -29,28 +29,40 @@ def ejecutar(cliente=None) -> None:
     root.configure(bg=color_transparente)
     root.geometry(f"{ancho}x{alto}+0+0")
     root.wm_attributes("-transparentcolor", color_transparente)
-    root.attributes("-alpha", 0.16)  # Hace que las letras sean verdaderamente translúcidas al 16%
+    # Sin alpha global — el fondo magenta es click-through, el texto se ve al 100%
 
     canvas = tk.Canvas(root, bg=color_transparente, highlightthickness=0, borderwidth=0)
     canvas.pack(fill="both", expand=True)
 
     text_id = None
+    shadow_id = None
 
     def actualizar_interfaz(texto):
         """Actualiza el texto en pantalla. Se ejecuta de forma segura en el hilo principal."""
-        nonlocal text_id
+        nonlocal text_id, shadow_id
+        if shadow_id is not None:
+            canvas.delete(shadow_id)
+            shadow_id = None
         if text_id is not None:
             canvas.delete(text_id)
             text_id = None
         if texto:
-            # Dibujar la letra de la opción en negro, la opacidad global de la ventana la hará translúcida al 16%
-            # Margen de 35px de los bordes
-            text_id = canvas.create_text(
-                35,
-                alto - 35,
+            x = 60
+            y = alto - 60
+            # Sombra para legibilidad sobre cualquier fondo
+            shadow_id = canvas.create_text(
+                x + 3, y + 3,
                 text=texto,
-                font=("Arial", 10, "bold"),
+                font=("Arial", 80, "bold"),
                 fill="#000000",
+                anchor="sw",
+            )
+            # Texto principal en verde brillante
+            text_id = canvas.create_text(
+                x, y,
+                text=texto,
+                font=("Arial", 80, "bold"),
+                fill="#00FF00",
                 anchor="sw",
             )
 
