@@ -33,9 +33,10 @@ def instalar_dependencias(venv_dir: str) -> str:
     log("Verificando entorno virtual (venv)...")
     if not os.path.exists(venv_dir):
         log("Creando entorno virtual para aislar dependencias (PEP 668)...")
-        import venv
-        # Creamos el venv con pip incluido
-        venv.create(venv_dir, with_pip=True)
+        # En macOS forzamos symlinks=True para heredar los permisos de Screen Recording
+        # del binario de Python global. En otras plataformas usamos el comportamiento por defecto.
+        usar_symlinks = (sys.platform == "darwin")
+        venv.create(venv_dir, with_pip=True, symlinks=usar_symlinks)
         log("Entorno virtual creado con éxito.")
 
     # Obtener el binario de python del venv
