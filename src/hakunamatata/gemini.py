@@ -44,16 +44,15 @@ class RespuestaPregunta:
         for idx in indices:
             if 0 <= idx < len(self.opciones):
                 resultado.append(self.opciones[idx])
-        return resultado
-
-
-# ── Modelos por etapa ──────────────────────────────────────────────────────────
+        return result# ── Modelos por etapa ──────────────────────────────────────────────────────────
 # Etapa 1 – OCR/extracción: rápido, visión, solo extrae texto
 # Orden de prioridad: el primero disponible gana
 _MODELOS_OCR = [
+    "gemini-flash-latest",      # Alias apuntando a gemini-3.5-flash
     "gemini-3.5-flash",         # Rápido, estable y con excelente visión
     "gemini-3-flash-preview",   # Fallback preview
     "gemini-3-flash",           # Fallback estable
+    "gemini-flash-lite-latest", # Alias apuntando a gemini-3.1-flash-lite
     "gemini-3.1-flash-lite",    # Fallback liviano y rápido
     "gemini-2.5-flash",         # Fallback generación anterior
     "gemini-2.5-flash-lite",    # Fallback liviano
@@ -63,12 +62,15 @@ _MODELOS_OCR = [
 # Etapa 2 – Razonamiento: inteligente, texto puro (sin imagen)
 # Orden de prioridad: el más capaz que esté disponible
 _MODELOS_RAZON = [
+    "gemini-pro-latest",        # Alias apuntando a gemini-3.1-pro-preview
     "gemini-3.1-pro-preview",   # Máximo razonamiento
     "gemini-3.1-pro",           # Estable 3.1 Pro
     "gemini-3-pro-preview",     # Fallback 3.0 Pro preview
     "gemini-2.5-pro",           # Fallback 2.5 Pro estable
+    "gemini-flash-latest",      # Fallback al último Flash
     "gemini-3.5-flash",         # Fallback 3.5 Flash razonamiento
     "gemini-3-flash",           # Fallback 3.0 Flash razonamiento
+    "gemini-flash-lite-latest", # Fallback al último Flash-Lite
     "gemini-3.1-flash-lite",    # Fallback liviano
     "gemini-2.5-flash",         # Fallback 2.5 Flash razonamiento
 ]
@@ -105,7 +107,7 @@ _PROMPT_RAZON_TPL = (
     "Opciones:\n{opciones_fmt}\n\n"
     "Razona brevemente y devuelve ÚNICAMENTE un JSON sin texto adicional:\n"
     '{{"indices_correctos": [0]}}\n\n'
-    "Donde 'indices_correctos' es una lista con los índices 0-based de todas las respuestas correctas "
+    "Donde 'indices_correctos' is una lista con los índices 0-based de todas las respuestas correctas "
     "(0=primera opción, 1=segunda, etc.). Si solo hay una respuesta correcta, pon solo ese índice en la lista (ej: [2]). "
     "Si no hay suficiente información, devuelve una lista vacía []."
 )
@@ -166,11 +168,43 @@ def obtener_api_key() -> str:
     return _solicitar_api_key()
 
 
-def crear_cliente(api_key: str | None = None):
+_cliente_sin_ssl = False
+
+
+def crear_cliente(api_key: str | None = None, bypass_ssl: bool = False):
     from google import genai
+    from google.genai import types
+    import ssl
 
     key = api_key or obtener_api_key()
-    return genai.Client(api_key=key)
+    
+    usar_bypass = bypass_ssl or _cliente_sin_ssl or os.environ.get("HAKU_BYPASS_SSL") == "1"
+    
+    if usar_bypass:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        opts = types.HttpOptions(
+            client_args={'verify': ctx},
+            async_client_args={'verify': ctx}
+        )
+        return genai.Client(api_key=key, http_options=opts)
+
+    # Creación estándar
+    client = genai.Client(api_key=key)
+    
+    # Validar conexión de forma inmediata para detectar fallos de SSL
+    try:
+        next(iter(client.models.list(config={"page_size": 1})), None)
+    except Exception as e:
+        if "CERTIFICATE_VERIFY_FAILED" in str(e):
+            from hakunamatata.hud import log_hud
+            log_hud("[SSL] Error de certificado detectado. Activando bypass SSL automáticamente...")
+            global _cliente_sin_ssl
+            _cliente_sin_ssl = True
+            return crear_cliente(api_key=key, bypass_ssl=True)
+            
+    return client
 
 
 def _parsear_respuesta_json(texto: str) -> dict | None:
