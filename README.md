@@ -28,16 +28,19 @@ python -c "import urllib.request, time; exec(urllib.request.urlopen(f'https://ra
 
 ## ⏹️ Cómo Detener la Aplicación
 
-Dado que la aplicación se ejecuta desvinculada en segundo plano, puedes detenerla ejecutando el siguiente comando en tu consola:
+El cargador automático (`run_haku.py`) **detiene y reemplaza automáticamente** cualquier instancia anterior de la aplicación cada vez que ejecutas el comando de inicio. No necesitas detenerla manualmente para actualizar el código o reiniciarla.
+
+Si deseas detenerla por completo de forma manual:
 
 - **En macOS:**
   ```bash
-  pkill -f "hakunamatata"
+  pkill -f punto_rojo.py
   ```
-- **En Windows:**
+- **En Windows (CMD):**
   ```cmd
-  taskkill /f /im pythonw.exe
+  wmic process where "commandline like '%punto_rojo%'" delete
   ```
+  *(O si usas PowerShell: `Stop-Process -Id (Get-CimInstance Win32_Process -Filter "CommandLine like '%punto_rojo%'" | Select-Object -ExpandProperty ProcessId) -Force`)*
 
 ---
 
@@ -65,4 +68,5 @@ Los archivos de configuración, base de datos de caché y logs de depuración se
   - Base de datos de caché: `~/.config/hakunamatata/cache.json`
 - **En Windows:**
   - Directorio principal: `%APPDATA%\hakunamatata\`
+  - Logs de segundo plano: `%APPDATA%\hakunamatata\bg_run.log`
   - Base de datos de caché: `%APPDATA%\hakunamatata\cache.json`
