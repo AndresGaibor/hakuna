@@ -29,7 +29,7 @@ def ejecutar(cliente=None) -> None:
     root.configure(bg=color_transparente)
     root.geometry(f"{ancho}x{alto}+0+0")
     root.wm_attributes("-transparentcolor", color_transparente)
-    root.attributes("-alpha", 0.70)  # Semi-transparente para ser disimulado
+    root.attributes("-alpha", 0.45)  # Semi-transparente para ser disimulado
 
     canvas = tk.Canvas(root, bg=color_transparente, highlightthickness=0, borderwidth=0)
     canvas.pack(fill="both", expand=True)
@@ -51,9 +51,9 @@ def ejecutar(cliente=None) -> None:
             y = alto - 40
             # Sombra negra para legibilidad sobre cualquier fondo
             shadow_id = canvas.create_text(
-                x + 2, y + 2,
+                x + 1, y + 1,
                 text=texto,
-                font=("Arial", 36, "bold"),
+                font=("Arial", 22, "bold"),
                 fill="#000000",
                 anchor="sw",
             )
@@ -61,8 +61,8 @@ def ejecutar(cliente=None) -> None:
             text_id = canvas.create_text(
                 x, y,
                 text=texto,
-                font=("Arial", 36, "bold"),
-                fill="#FFFFFF",
+                font=("Arial", 22, "bold"),
+                fill="#C0C0C0",
                 anchor="sw",
             )
 
