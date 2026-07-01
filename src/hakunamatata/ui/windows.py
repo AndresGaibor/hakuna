@@ -29,7 +29,7 @@ def ejecutar(cliente=None) -> None:
     root.configure(bg=color_transparente)
     root.geometry(f"{ancho}x{alto}+0+0")
     root.wm_attributes("-transparentcolor", color_transparente)
-    # Sin alpha global — el fondo magenta es click-through, el texto se ve al 100%
+    root.attributes("-alpha", 0.70)  # Semi-transparente para ser disimulado
 
     canvas = tk.Canvas(root, bg=color_transparente, highlightthickness=0, borderwidth=0)
     canvas.pack(fill="both", expand=True)
@@ -47,22 +47,22 @@ def ejecutar(cliente=None) -> None:
             canvas.delete(text_id)
             text_id = None
         if texto:
-            x = 60
-            y = alto - 60
-            # Sombra para legibilidad sobre cualquier fondo
+            x = 40
+            y = alto - 40
+            # Sombra negra para legibilidad sobre cualquier fondo
             shadow_id = canvas.create_text(
-                x + 3, y + 3,
+                x + 2, y + 2,
                 text=texto,
-                font=("Arial", 80, "bold"),
+                font=("Arial", 36, "bold"),
                 fill="#000000",
                 anchor="sw",
             )
-            # Texto principal en verde brillante
+            # Texto principal blanco — discreto pero legible
             text_id = canvas.create_text(
                 x, y,
                 text=texto,
-                font=("Arial", 80, "bold"),
-                fill="#00FF00",
+                font=("Arial", 36, "bold"),
+                fill="#FFFFFF",
                 anchor="sw",
             )
 
