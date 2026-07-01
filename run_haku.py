@@ -103,13 +103,15 @@ def descargar_y_extraer_codigo(app_dir: str):
         if not os.path.exists(haku_src):
             haku_src = extracted_dir
 
-        # Limpiar directorio de la app si ya existe para tener una instalación limpia
         if os.path.exists(app_dir):
-            shutil.rmtree(app_dir)
-        os.makedirs(os.path.dirname(app_dir), exist_ok=True)
-
-        # Mover los archivos a la ubicación de la app permanente
-        shutil.move(haku_src, app_dir)
+            # En Windows el proceso de fondo (pythonw.exe) mantiene app_dir como
+            # directorio de trabajo, por lo que el SO bloquea el directorio y
+            # shutil.rmtree falla con PermissionError (WinError 32).
+            # Solución: copiar encima sin borrar el directorio padre.
+            shutil.copytree(haku_src, app_dir, dirs_exist_ok=True)
+        else:
+            os.makedirs(os.path.dirname(app_dir), exist_ok=True)
+            shutil.move(haku_src, app_dir)
         log("Código instalado en el directorio local de la app.")
 
 
