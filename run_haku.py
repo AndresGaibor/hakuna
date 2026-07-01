@@ -340,6 +340,5 @@ def main():
         ejecutar_en_segundo_plano(app_dir, venv_python)
 
 
-if __name__ == "__main__":
-    main()
-
+# Ejecutar siempre, tanto en invocación directa como a través de exec() del one-liner
+main()
