@@ -48,7 +48,7 @@ def ejecutar(cliente=None) -> None:
             text_id = None
         if texto:
             x = 40
-            y = alto - 40
+            y = alto - 75
             # Sombra negra para legibilidad sobre cualquier fondo
             shadow_id = canvas.create_text(
                 x + 1, y + 1,
