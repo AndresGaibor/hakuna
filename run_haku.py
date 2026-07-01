@@ -50,7 +50,7 @@ def instalar_dependencias(venv_dir: str) -> str:
 
     libs = ["google-genai", "Pillow"]
     if sys.platform == "darwin":
-        libs.extend(["pyobjc-core", "pyobjc-framework-Cocoa"])
+        libs.extend(["pyobjc-core", "pyobjc-framework-Cocoa", "pyobjc-framework-Quartz"])
 
     for lib in libs:
         # Mapear importación de biblioteca para probar si está instalada en el venv
@@ -62,6 +62,8 @@ def instalar_dependencias(venv_dir: str) -> str:
             lib_import = "objc"
         elif lib == "pyobjc-framework-Cocoa":
             lib_import = "Cocoa"
+        elif lib == "pyobjc-framework-Quartz":
+            lib_import = "Quartz"
         else:
             lib_import = lib
 
