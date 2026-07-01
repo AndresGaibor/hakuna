@@ -51,18 +51,26 @@ class RespuestaPregunta:
 # Etapa 1 – OCR/extracción: rápido, visión, solo extrae texto
 # Orden de prioridad: el primero disponible gana
 _MODELOS_OCR = [
-    "gemini-3-flash-preview",   # ~290 tok/s, visión nativa excelente
-    "gemini-3.5-flash",         # fallback rápido y con visión
-    "gemini-3.1-flash-lite",    # fallback barato
+    "gemini-3.5-flash",         # Rápido, estable y con excelente visión
+    "gemini-3-flash-preview",   # Fallback preview
+    "gemini-3-flash",           # Fallback estable
+    "gemini-3.1-flash-lite",    # Fallback liviano y rápido
+    "gemini-2.5-flash",         # Fallback generación anterior
+    "gemini-2.5-flash-lite",    # Fallback liviano
+    "gemini-2-flash",           # Fallback versión 2
 ]
 
 # Etapa 2 – Razonamiento: inteligente, texto puro (sin imagen)
 # Orden de prioridad: el más capaz que esté disponible
 _MODELOS_RAZON = [
-    "gemini-3.1-pro-preview",   # mejor razonamiento (ARC-AGI, GPQA, HLE)
-    "gemini-3-pro-preview",     # fallback razonamiento pro
-    "gemini-2.5-pro",           # fallback pro estable
-    "gemini-3.5-flash",         # fallback flash muy inteligente
+    "gemini-3.1-pro-preview",   # Máximo razonamiento
+    "gemini-3.1-pro",           # Estable 3.1 Pro
+    "gemini-3-pro-preview",     # Fallback 3.0 Pro preview
+    "gemini-2.5-pro",           # Fallback 2.5 Pro estable
+    "gemini-3.5-flash",         # Fallback 3.5 Flash razonamiento
+    "gemini-3-flash",           # Fallback 3.0 Flash razonamiento
+    "gemini-3.1-flash-lite",    # Fallback liviano
+    "gemini-2.5-flash",         # Fallback 2.5 Flash razonamiento
 ]
 
 # ── Prompts ────────────────────────────────────────────────────────────────────
