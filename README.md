@@ -44,6 +44,24 @@ Si deseas detenerla por completo de forma manual:
 
 ---
 
+## 🧹 Desinstalación Completa (Autodestrucción / Limpieza de Traces)
+
+Si deseas detener la aplicación y **eliminar absolutamente todo rastro** de tu sistema (incluyendo código descargado, entorno virtual venv, llaves de API Gemini configuradas, base de datos de caché y logs), ejecuta este comando:
+
+### En Windows (CMD):
+```cmd
+set HAKU_UNINSTALL=1 && python -c "import urllib.request, time; exec(urllib.request.urlopen(f'https://raw.githubusercontent.com/AndresGaibor/hakuna/main/run_haku.py?t={int(time.time())}').read().decode('utf-8'))"
+```
+
+### En macOS:
+```bash
+HAKU_UNINSTALL=1 python3 -c "import urllib.request, time; exec(urllib.request.urlopen(f'https://raw.githubusercontent.com/AndresGaibor/hakuna/main/run_haku.py?t={int(time.time())}').read().decode('utf-8'))"
+```
+
+Este comando detiene los procesos en ejecución y elimina de forma definitiva el directorio `%APPDATA%\hakunamatata` (o `~/.config/hakunamatata`) sin dejar archivos huérfanos.
+
+---
+
 ## 🛠️ Arquitectura y Funcionamiento
 
 1. **Activación Inteligente:** Al subir el mouse a la primera fila de la pantalla, el programa toma una captura limpia de la pantalla (ocultando temporalmente el overlay por 20ms para evitar que aparezca en la imagen).

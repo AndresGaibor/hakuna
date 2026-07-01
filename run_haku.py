@@ -347,7 +347,47 @@ def _ruta_flag_debug() -> str:
     return os.path.join(base, "hakunamatata", "debug.flag")
 
 
+def desinstalar():
+    log("Iniciando desinstalacion completa...")
+    
+    # 1. Terminar procesos activos
+    try:
+        terminar_instancia_previa()
+    except Exception as e:
+        log(f"Aviso al detener procesos: {e}")
+        
+    # Esperar un momento a que Windows libere los locks de archivos
+    time.sleep(0.5)
+    
+    # 2. Borrar carpeta principal del sistema
+    app_dir = obtener_ruta_app()
+    parent_dir = os.path.dirname(app_dir)
+    
+    if os.path.exists(parent_dir):
+        log(f"Eliminando directorio principal: {parent_dir}")
+        for intento in range(3):
+            try:
+                shutil.rmtree(parent_dir)
+                log("✓ Todos los archivos, cache, API keys, codigo y logs han sido eliminados.")
+                break
+            except Exception as e:
+                time.sleep(0.5)
+        else:
+            log("Aviso: Algunos archivos no se pudieron eliminar de inmediato porque Windows los mantiene bloqueados.")
+            log(f"Puedes borrar manualmente la carpeta: {parent_dir}")
+    else:
+        log("No se encontraron rastros activos de Hakunamatata en el sistema.")
+        
+    log("Desinstalacion completada. Todo rastro ha sido removido.")
+    sys.exit(0)
+
+
 def main():
+    # Detectar desinstalación por variable de entorno o argumento
+    uninstall = "--uninstall" in sys.argv or bool(os.environ.get("HAKU_UNINSTALL", "").strip())
+    if uninstall:
+        desinstalar()
+
     # Modo debug si existe el archivo flag O la variable de entorno (con .strip() por Windows cmd)
     flag_file = os.path.exists(_ruta_flag_debug())
     env_var = bool(os.environ.get("HAKU_DEBUG", "").strip())
