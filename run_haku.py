@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 import subprocess
@@ -179,9 +180,79 @@ def ejecutar_en_segundo_plano(app_dir: str, venv_python: str):
         log("Plataforma no soportada para segundo plano.")
 
 
+def _ruta_config() -> str:
+    if sys.platform.startswith("win"):
+        base = os.environ.get("APPDATA", os.path.expanduser("~"))
+    else:
+        base = os.path.expanduser("~/.config")
+    return os.path.join(base, "hakunamatata", "config.json")
+
+
+def _leer_api_key_guardada() -> str | None:
+    try:
+        with open(_ruta_config()) as f:
+            return json.load(f).get("api_key")
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
+def _guardar_api_key(api_key: str) -> None:
+    ruta = _ruta_config()
+    os.makedirs(os.path.dirname(ruta), exist_ok=True)
+    with open(ruta, "w") as f:
+        json.dump({"api_key": api_key}, f)
+    try:
+        os.chmod(ruta, 0o600)
+    except OSError:
+        pass
+
+
+def solicitar_api_key() -> None:
+    """Pide la API key al usuario en la terminal visible y la persiste en disco.
+
+    Solo solicita si no hay ya una clave guardada o en variable de entorno.
+    """
+    # Ya existe en variable de entorno → no hace falta pedir nada
+    if os.environ.get("GEMINI_API_KEY"):
+        log("API key detectada en variable de entorno GEMINI_API_KEY.")
+        return
+
+    # Ya existe guardada en disco → tampoco pedir
+    if _leer_api_key_guardada():
+        log("API key encontrada en configuración guardada.")
+        return
+
+    # No hay clave: pedir al usuario ahora, en este terminal visible
+    print()
+    print("==========================================")
+    print("  HAKUNAMATATA - Configuración inicial")
+    print("==========================================")
+    print()
+    print("Necesitas una API key de Google Gemini para continuar.")
+    print("Obtén una gratis en: https://aistudio.google.com/apikey")
+    print()
+
+    while True:
+        try:
+            key = input("Ingresa tu API key de Gemini: ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nInstalación cancelada.")
+            sys.exit(0)
+
+        if key:
+            break
+        print("La API key no puede estar vacía. Inténtalo de nuevo.")
+
+    _guardar_api_key(key)
+    log(f"API key guardada en: {_ruta_config()}")
+
+
 def main():
     app_dir = obtener_ruta_app()
     venv_dir = obtener_ruta_venv()
+
+    # 0. Pedir API key antes de hacer cualquier otra cosa
+    solicitar_api_key()
 
     # 1. Instalar dependencias en el venv aislado
     venv_python = instalar_dependencias(venv_dir)
